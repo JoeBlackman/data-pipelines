@@ -20,3 +20,4 @@ class LoadDimensionOperator(BaseOperator):
 
     def execute(self, context):
         self.log.info('LoadDimensionOperator not implemented yet')
+        # insert data from staging tables to dimension table

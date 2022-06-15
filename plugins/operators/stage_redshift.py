@@ -19,6 +19,7 @@ class StageToRedshiftOperator(BaseOperator):
 
     def execute(self, context):
         self.log.info('StageToRedshiftOperator not implemented yet')
+        # copy data from s3 to redshift 
 
 
 

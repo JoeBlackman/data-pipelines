@@ -20,3 +20,4 @@ class LoadFactOperator(BaseOperator):
 
     def execute(self, context):
         self.log.info('LoadFactOperator not implemented yet')
+        # insert data from staging tables to fact table

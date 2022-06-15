@@ -20,3 +20,4 @@ class DataQualityOperator(BaseOperator):
 
     def execute(self, context):
         self.log.info('DataQualityOperator not implemented yet')
+        # verify records loaded into each analysis table
