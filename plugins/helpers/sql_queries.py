@@ -252,3 +252,31 @@ class SqlQueries:
         FROM uniq_staging_events
         WHERE rank = 1;
     """)
+
+    test_songplays_count = "SELECT COUNT(*) FROM songplays;"
+
+    test_songs_count = "SELECT COUNT(*) FROM songs;"
+
+    test_artists_count = "SELECT COUNT(*) FROM artists;"
+
+    test_users_count = "SELECT COUNT(*) FROM users;"
+
+    test_time_count = "SELECT COUNT(*) FROM time;"
+
+    test_songplays_nulls = """
+        SELECT COUNT(*) 
+        FROM songplays
+        WHERE start_time IS NULL OR user_id IS NULL OR level IS NULL;
+    """
+
+    test_songs_nulls = """
+        SELECT COUNT(*)
+        FROM songs
+        WHERE s
+    """
+
+    test_artists_nulls = ""
+
+    test_users_nulls = ""
+
+    test_time_nulls = ""

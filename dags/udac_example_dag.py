@@ -13,9 +13,10 @@ default_args = {
     'owner': 'udacity',
     'Depends_on_past': False,
     'start_date': datetime(2019, 1, 12),
-    'Retries': 1,
+    'Retries': 3,
     'Retry_delay': timedelta(minutes=5),
-    'Catchup': False
+    'Catchup': False,
+    'email_on_retry': False
 }
 
 dag = DAG(
@@ -33,7 +34,8 @@ start_operator = DummyOperator(
 
 stage_events_to_redshift = StageToRedshiftOperator(
     task_id='Stage_events',
-    dag=dag
+    dag=dag,
+    python_callable = ?
 )
 
 stage_songs_to_redshift = StageToRedshiftOperator(
@@ -68,7 +70,19 @@ load_time_dimension_table = LoadDimensionOperator(
 
 run_quality_checks = DataQualityOperator(
     task_id='Run_data_quality_checks',
-    dag=dag
+    dag=dag,
+    redshift_conn_id='',
+    table='',
+    tests=[
+        ("SELECT COUNT(*) FROM songplays;", ), 
+        ("SELECT COUNT(*) FROM songs;", ), 
+        ("SELECT COUNT(*) FROM artists;", ), 
+        ("SELECT COUNT(*) FROM users;", ), 
+        ("SELECT COUNT(*) FROM time;", ),
+        (),
+        (),
+        
+    ]
 )
 
 end_operator = DummyOperator(
