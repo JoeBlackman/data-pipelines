@@ -4,7 +4,9 @@ from airflow import DAG
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators import (StageToRedshiftOperator, LoadFactOperator,
                                 LoadDimensionOperator, DataQualityOperator)
-from helpers import SqlQueries
+from plugins.helpers import sql_queries
+from plugins.helpers.sql_queries import SqlQueries
+from plugins.helpers.test import test
 
 # AWS_KEY = os.environ.get('AWS_KEY')
 # AWS_SECRET = os.environ.get('AWS_SECRET')
@@ -72,16 +74,67 @@ run_quality_checks = DataQualityOperator(
     task_id='Run_data_quality_checks',
     dag=dag,
     redshift_conn_id='',
-    table='',
     tests=[
-        ("SELECT COUNT(*) FROM songplays;", ), 
-        ("SELECT COUNT(*) FROM songs;", ), 
-        ("SELECT COUNT(*) FROM artists;", ), 
-        ("SELECT COUNT(*) FROM users;", ), 
-        ("SELECT COUNT(*) FROM time;", ),
-        (),
-        (),
-        
+        test(
+            SqlQueries.test_artists_count, 
+            lambda x : True if x > 0 else False, 
+            "Data quality check failed. artists table contained 0 records.",
+            "Data quality check passed. artists table contains records."
+        ),
+        test(
+            SqlQueries.test_artists_nulls, 
+            lambda x: False if x > 0 else True,
+            "Data quality check failed. Not null columns within the artists table contained nulls.",
+            "Data quality check passed. No unexpected nulls in columns of artists table."
+        ),
+        test(
+            SqlQueries.test_songs_count, 
+            lambda x : True if x > 0 else False,
+            "Data quality check failed. songs table contained 0 rows.",
+            "Data quality check passed. songs table contains records."
+        ),
+        test(
+            SqlQueries.test_songs_nulls, 
+            lambda x: False if x > 0 else True,
+            "Data quality check failed. Not null columns within the songs table contained nulls.",
+            "Data quality check passed. No unexpected nulls in columns of songs table."
+        ),
+        test(
+            SqlQueries.test_songplays_count, 
+            lambda x : True if x > 0 else False,
+            "Data quality check failed. songplays table contained 0 rows.",
+            "Data quality check passed. songplays table contains records."
+        ),
+        test(
+            SqlQueries.test_songplays_nulls, 
+            lambda x: False if x > 0 else True,
+            "Data quality check failed. Not null columns within the songplays table contained nulls.",
+            "Data quality check passed. No unexpected nulls in columns of songplays table."
+        ),
+        test(
+            SqlQueries.test_time_count, 
+            lambda x : True if x > 0 else False,
+            "Data quality check failed. time table contained 0 rows.",
+            "Data quality check passed. time table contains records."
+        ),
+        test(
+            SqlQueries.test_time_nulls, 
+            lambda x: False if x > 0 else True,
+            "Data quality check failed. Not null columns within time table contained nulls.",
+            "Data quality check passed. No unexpected nulls in columns of time table."
+        ),
+        test(
+            SqlQueries.test_users_count, 
+            lambda x : True if x > 0 else False,
+            "Data quality check failed. users table contained 0 rows.",
+            "Data quality check passed. users table contains records."
+        ),
+        test(
+            SqlQueries.test_users_nulls, 
+            lambda x: False if x > 0 else True,
+            "Data quality check failed. Not null columns within users table contained nulls.",
+            "Data quality check passed. No unexpected nulls in columns of users table."
+        )
     ]
 )
 

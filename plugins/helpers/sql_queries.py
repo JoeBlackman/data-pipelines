@@ -1,5 +1,5 @@
 class SqlQueries:
-    artist_table_create = ("""
+    create_artists_table = ("""
         CREATE TABLE IF NOT EXISTS artists (
             artist_id   varchar(256)        NOT NULL,
             name        varchar(512)        NOT NULL,
@@ -12,7 +12,103 @@ class SqlQueries:
         sortkey(name);
     """)
     
-    artist_table_insert = ("""
+    create_songs_table = ("""
+        CREATE TABLE IF NOT EXISTS songs (
+            song_id     varchar(256)        NOT NULL,
+            title       varchar(512)        NOT NULL,
+            artist_id   varchar(256)        NOT NULL,
+            year        INT4,
+            duration    DECIMAL(9, 5)       NOT NULL,
+            primary key(song_id)
+        )
+        distkey(song_id)
+        sortkey(title);
+    """)
+
+    create_songplays_table = ("""
+        CREATE TABLE IF NOT EXISTS songplays (
+            songplay_id     BIGINT              IDENTITY(0,1),
+            start_time      TIMESTAMP           NOT NULL,
+            user_id         INT4                NOT NULL,
+            level           varchar(256)        NOT NULL,
+            song_id         varchar(256),
+            artist_id       varchar(256),
+            session_id      INT4, 
+            location        varchar(256),
+            user_agent      varchar(256),
+            primary key(songplay_id)
+        )
+        distkey(songplay_id)
+        sortkey(start_time);
+    """)
+
+    create_staging_events_table = ("""
+        CREATE TABLE IF NOT EXISTS staging_events (
+            artist              VARCHAR(256),
+            auth                VARCHAR(256),
+            firstName           VARCHAR(256),
+            gender              CHAR,
+            itemInSession       INT4,
+            lastName            VARCHAR(256),
+            lenth               DECIMAL(9, 5),
+            level               VARCHAR(256),
+            location            VARCHAR(256),
+            method              VARCHAR(256),
+            page                VARCHAR(256),
+            registration        VARCHAR(15),
+            sessionId           INT4,
+            song                VARCHAR(256),
+            status              INT4,
+            ts                  INT8,
+            userAgent           VARCHAR(256),
+            userId              INT4
+        );
+    """)
+
+    create_staging_songs_table = ("""
+        CREATE TABLE IF NOT EXISTS staging_songs (
+            num_songs           INT4,
+            artist_id           VARCHAR(256),
+            artist_latitude     DECIMAL(5, 2),
+            artist_longitude    DECIMAL(5, 2),
+            artist_location     VARCHAR(512),
+            artist_name         VARCHAR(512),
+            song_id             VARCHAR(256),
+            title               VARCHAR(512),
+            duration            DECIMAL(9, 5),
+            year                INT4
+        );
+    """)
+
+    create_time_table = ("""
+        CREATE TABLE IF NOT EXISTS time (
+            start_time  TIMESTAMP           NOT NULL,
+            hour        INT4                NOT NULL,
+            day         INT4                NOT NULL,
+            week        INT4                NOT NULL,
+            month       INT4                NOT NULL,
+            year        INT4                NOT NULL,
+            weekday     INT4                NOT NULL,
+            primary key(start_time)
+        )
+        distkey(month)
+        sortkey(start_time);
+    """)
+    
+    create_users_table = ("""
+        CREATE TABLE IF NOT EXISTS users (
+            user_id         INT4          NOT NULL, 
+            first_name      varchar(256)  NOT NULL, 
+            last_name       varchar(256)  NOT NULL, 
+            gender          CHAR,
+            level           varchar(256)  NOT NULL,
+            primary key(user_id)
+        )
+        distkey(user_id)
+        sortkey(last_name);
+    """)
+
+    insert_artists_table = ("""
         INSERT INTO artists(
             artist_id, 
             name, 
@@ -39,22 +135,9 @@ class SqlQueries:
             longitude
         FROM uniq_staging_songs
         WHERE rank = 1;
-    """)
-    
-    song_table_create = ("""
-        CREATE TABLE IF NOT EXISTS songs (
-            song_id     varchar(256)        NOT NULL,
-            title       varchar(512)        NOT NULL,
-            artist_id   varchar(256)        NOT NULL,
-            year        INT4,
-            duration    DECIMAL(9, 5)       NOT NULL,
-            primary key(song_id)
-        )
-        distkey(song_id)
-        sortkey(title);
-    """)
+    """)    
 
-    song_table_insert = ("""
+    insert_songs_table = ("""
         INSERT INTO songs(
             song_id, 
             title, 
@@ -81,25 +164,8 @@ class SqlQueries:
         FROM uniq_staging_songs
         WHERE rank = 1;
     """)
-
-    songplay_table_create = ("""
-        CREATE TABLE IF NOT EXISTS songplays (
-            songplay_id     BIGINT              IDENTITY(0,1),
-            start_time      TIMESTAMP           NOT NULL,
-            user_id         INT4                NOT NULL,
-            level           varchar(256)        NOT NULL,
-            song_id         varchar(256),
-            artist_id       varchar(256),
-            session_id      INT4, 
-            location        varchar(256),
-            user_agent      varchar(256),
-            primary key(songplay_id)
-        )
-        distkey(songplay_id)
-        sortkey(start_time);
-    """)
     
-    songplay_table_insert = ("""
+    insert_songplays_table = ("""
         INSERT INTO songplays(
             start_time, 
             user_id, 
@@ -130,60 +196,7 @@ class SqlQueries:
         FROM uniq_staging_events;
     """)
 
-    staging_events_table_create = ("""
-        CREATE TABLE IF NOT EXISTS staging_events (
-            artist              VARCHAR(256),
-            auth                VARCHAR(256),
-            firstName           VARCHAR(256),
-            gender              CHAR,
-            itemInSession       INT4,
-            lastName            VARCHAR(256),
-            lenth               DECIMAL(9, 5),
-            level               VARCHAR(256),
-            location            VARCHAR(256),
-            method              VARCHAR(256),
-            page                VARCHAR(256),
-            registration        VARCHAR(15),
-            sessionId           INT4,
-            song                VARCHAR(256),
-            status              INT4,
-            ts                  INT8,
-            userAgent           VARCHAR(256),
-            userId              INT4
-        );
-    """)
-
-    staging_songs_table_create = ("""
-        CREATE TABLE IF NOT EXISTS staging_songs (
-            num_songs           INT4,
-            artist_id           VARCHAR(256),
-            artist_latitude     DECIMAL(5, 2),
-            artist_longitude    DECIMAL(5, 2),
-            artist_location     VARCHAR(512),
-            artist_name         VARCHAR(512),
-            song_id             VARCHAR(256),
-            title               VARCHAR(512),
-            duration            DECIMAL(9, 5),
-            year                INT4
-        );
-    """)
-
-    time_table_create = ("""
-        CREATE TABLE IF NOT EXISTS time (
-            start_time  TIMESTAMP           NOT NULL,
-            hour        INT4                NOT NULL,
-            day         INT4                NOT NULL,
-            week        INT4                NOT NULL,
-            month       INT4                NOT NULL,
-            year        INT4                NOT NULL,
-            weekday     INT4                NOT NULL,
-            primary key(start_time)
-        )
-        distkey(month)
-        sortkey(start_time);
-    """)
-
-    time_table_insert = ("""
+    insert_time_table = ("""
         INSERT INTO time(
             start_time, 
             hour, 
@@ -211,20 +224,7 @@ class SqlQueries:
         WHERE rank = 1;
     """)
 
-    user_table_create = ("""
-        CREATE TABLE IF NOT EXISTS users (
-            user_id         INT4          NOT NULL, 
-            first_name      varchar(256)  NOT NULL, 
-            last_name       varchar(256)  NOT NULL, 
-            gender          CHAR,
-            level           varchar(256)  NOT NULL,
-            primary key(user_id)
-        )
-        distkey(user_id)
-        sortkey(last_name);
-    """)
-
-    user_table_insert = ("""
+    insert_users_table = ("""
         INSERT INTO users(
             user_id, 
             first_name, 
@@ -253,30 +253,66 @@ class SqlQueries:
         WHERE rank = 1;
     """)
 
-    test_songplays_count = "SELECT COUNT(*) FROM songplays;"
-
-    test_songs_count = "SELECT COUNT(*) FROM songs;"
-
     test_artists_count = "SELECT COUNT(*) FROM artists;"
 
-    test_users_count = "SELECT COUNT(*) FROM users;"
-
-    test_time_count = "SELECT COUNT(*) FROM time;"
-
-    test_songplays_nulls = """
-        SELECT COUNT(*) 
-        FROM songplays
-        WHERE start_time IS NULL OR user_id IS NULL OR level IS NULL;
+    # because i can see the sql create that insists on these values being not null
+    # this test isn't exactly necessary since the insertion would fail
+    # however, the rublic insisted on testing this so we'll do it anyway
+    # I guess this is just how the QA would verify that the data requirement is met?
+    test_artists_nulls = """
+        SELECT COUNT(*)
+        FROM artists
+        WHERE 
+            artist_id IS NULL OR 
+            name IS NULL;
     """
+
+    test_songs_count = "SELECT COUNT(*) FROM songs;"
 
     test_songs_nulls = """
         SELECT COUNT(*)
         FROM songs
-        WHERE s
+        WHERE 
+            song_id IS NULL OR
+            title IS NULL OR
+            artist_id IS NULL OR
+            durataion IS NULL;
     """
 
-    test_artists_nulls = ""
+    test_songplays_count = "SELECT COUNT(*) FROM songplays;"
+    
+    test_songplays_nulls = """
+        SELECT COUNT(*) 
+        FROM songplays
+        WHERE 
+            start_time IS NULL OR 
+            user_id IS NULL OR 
+            level IS NULL;
+    """
 
-    test_users_nulls = ""
+    test_time_count = "SELECT COUNT(*) FROM time;"
 
-    test_time_nulls = ""
+    test_time_nulls = """
+        SELECT COUNT(*)
+        FROM time
+        WHERE 
+            start_time IS NULL OR
+            hour IS NULL OR
+            day IS NULL OR
+            week IS NULL OR
+            month IS NULL OR
+            year IS NULL OR
+            weekday IS NULL;
+    """
+
+    test_users_count = "SELECT COUNT(*) FROM users;"
+
+    test_users_nulls = """
+        SELECT COUNT(*)
+        FROM users
+        WHERE 
+            user_id IS NULL OR 
+            first_name IS NULL OR 
+            last_name IS NULL OR 
+            level IS NULL;
+    """
