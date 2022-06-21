@@ -21,7 +21,7 @@ class DataQualityOperator(BaseOperator):
         self.tests = tests
 
     def execute(self, context):
-        self.log.info('DataQualityOperator not implemented yet')
+        self.log.info('Beginning task: quality check')
         redshift_hook = PostgresHook(self.redshift_conn_id)
         for test in self.tests:
             result = redshift_hook.get_records(test.sql_query)

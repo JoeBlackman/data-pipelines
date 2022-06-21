@@ -2,11 +2,15 @@ from datetime import datetime, timedelta
 import os
 from airflow import DAG
 from airflow.operators.dummy_operator import DummyOperator
-from airflow.operators import (StageToRedshiftOperator, LoadFactOperator,
-                                LoadDimensionOperator, DataQualityOperator)
+from airflow.operators import (
+    StageToRedshiftOperator, 
+    LoadFactOperator,
+    LoadDimensionOperator, 
+    DataQualityOperator
+)
 from plugins.helpers import sql_queries
 from plugins.helpers.sql_queries import SqlQueries
-from plugins.helpers.test import test
+from plugins.helpers.test import Test
 
 # AWS_KEY = os.environ.get('AWS_KEY')
 # AWS_SECRET = os.environ.get('AWS_SECRET')
@@ -22,7 +26,7 @@ default_args = {
 }
 
 dag = DAG(
-    'udac_example_dag',
+    'sparkify-etl',
     default_args=default_args,
     description='Load and transform data in Redshift with Airflow',
     schedule_interval=timedelta(hours=1),
@@ -34,40 +38,81 @@ start_operator = DummyOperator(
     dag=dag
 )
 
+# need to make a decision about when to create tables
+# there is no explicit mention of when this should occur based on the spec,
+# if tasks are supposed to only do a single thing (Single responsibility methods/classes)
+# then the tables need to be created either before the dag runs which is not easiliy reusable
+# OR a new task needs to be created which creates the tables before staging and analysis tables
+# are inserted into
+
+# NOTE: upon reading up on subdags and discovering they've been depricated, 
+# I think the staging and load dimension tasks would be good
+# candidates for this feature if we chose to use it.
+# The rubric does insist on the dag following the data flow provided in the 
+# instructions, so i'd prefer not to challenge the rublic/instructions here.
+
 stage_events_to_redshift = StageToRedshiftOperator(
     task_id='Stage_events',
     dag=dag,
-    python_callable = ?
+    table='staging_events',
+    redshift_conn_id='redshift',
+    aws_credentials_id='aws_credentials',
+    s3_bucket='udacity-dend',
+    s3_key='log_data'
 )
 
 stage_songs_to_redshift = StageToRedshiftOperator(
     task_id='Stage_songs',
-    dag=dag
+    dag=dag,
+    table='staging_songs',
+    redshift_conn_id='redshift',
+    aws_credentials_id='aws_credentials',
+    s3_bucket='udacity-dend',
+    s3_key='song_data'
 )
 
 load_songplays_table = LoadFactOperator(
     task_id='Load_songplays_fact_table',
-    dag=dag
+    dag=dag,
+    redshift_conn_id='redshift',
+    table='songplays',
+    sql_query=SqlQueries.insert_songplays_table
 )
 
 load_user_dimension_table = LoadDimensionOperator(
     task_id='Load_user_dim_table',
-    dag=dag
+    dag=dag,
+    redshift_conn_id='redshift',
+    table='users',
+    sql_query = SqlQueries.insert_users_table,
+    truncate_insert = True
 )
 
 load_song_dimension_table = LoadDimensionOperator(
     task_id='Load_song_dim_table',
-    dag=dag
+    dag=dag,
+    redshift_conn_id='redshift',
+    table='songs',
+    sql_query = SqlQueries.insert_songs_table,
+    truncate_insert = True
 )
 
 load_artist_dimension_table = LoadDimensionOperator(
     task_id='Load_artist_dim_table',
-    dag=dag
+    dag=dag,
+    redshift_conn_id='redshift',
+    table='artists',
+    sql_query = SqlQueries.insert_artists_table,
+    truncate_insert = True
 )
 
 load_time_dimension_table = LoadDimensionOperator(
     task_id='Load_time_dim_table',
-    dag=dag
+    dag=dag,
+    redshift_conn_id='redshift',
+    table='time',
+    sql_query = SqlQueries.insert_time_table,
+    truncate_insert = True
 )
 
 run_quality_checks = DataQualityOperator(
@@ -75,61 +120,61 @@ run_quality_checks = DataQualityOperator(
     dag=dag,
     redshift_conn_id='',
     tests=[
-        test(
+        Test(
             SqlQueries.test_artists_count, 
             lambda x : True if x > 0 else False, 
             "Data quality check failed. artists table contained 0 records.",
             "Data quality check passed. artists table contains records."
         ),
-        test(
+        Test(
             SqlQueries.test_artists_nulls, 
             lambda x: False if x > 0 else True,
             "Data quality check failed. Not null columns within the artists table contained nulls.",
             "Data quality check passed. No unexpected nulls in columns of artists table."
         ),
-        test(
+        Test(
             SqlQueries.test_songs_count, 
             lambda x : True if x > 0 else False,
             "Data quality check failed. songs table contained 0 rows.",
             "Data quality check passed. songs table contains records."
         ),
-        test(
+        Test(
             SqlQueries.test_songs_nulls, 
             lambda x: False if x > 0 else True,
             "Data quality check failed. Not null columns within the songs table contained nulls.",
             "Data quality check passed. No unexpected nulls in columns of songs table."
         ),
-        test(
+        Test(
             SqlQueries.test_songplays_count, 
             lambda x : True if x > 0 else False,
             "Data quality check failed. songplays table contained 0 rows.",
             "Data quality check passed. songplays table contains records."
         ),
-        test(
+        Test(
             SqlQueries.test_songplays_nulls, 
             lambda x: False if x > 0 else True,
             "Data quality check failed. Not null columns within the songplays table contained nulls.",
             "Data quality check passed. No unexpected nulls in columns of songplays table."
         ),
-        test(
+        Test(
             SqlQueries.test_time_count, 
             lambda x : True if x > 0 else False,
             "Data quality check failed. time table contained 0 rows.",
             "Data quality check passed. time table contains records."
         ),
-        test(
+        Test(
             SqlQueries.test_time_nulls, 
             lambda x: False if x > 0 else True,
             "Data quality check failed. Not null columns within time table contained nulls.",
             "Data quality check passed. No unexpected nulls in columns of time table."
         ),
-        test(
+        Test(
             SqlQueries.test_users_count, 
             lambda x : True if x > 0 else False,
             "Data quality check failed. users table contained 0 rows.",
             "Data quality check passed. users table contains records."
         ),
-        test(
+        Test(
             SqlQueries.test_users_nulls, 
             lambda x: False if x > 0 else True,
             "Data quality check failed. Not null columns within users table contained nulls.",

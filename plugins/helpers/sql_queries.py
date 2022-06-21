@@ -1,4 +1,11 @@
 class SqlQueries:
+    copy_from_s3 = """
+        COPY ${table}
+        FROM s3://${s3_bucket}/${s3_key}
+        ACCESS_KEY_ID ${access_key}
+        SECRET_ACCESS_KEY ${secret_key}
+    """
+    
     create_artists_table = ("""
         CREATE TABLE IF NOT EXISTS artists (
             artist_id   varchar(256)        NOT NULL,
@@ -107,6 +114,20 @@ class SqlQueries:
         distkey(user_id)
         sortkey(last_name);
     """)
+
+    drop_artists_table = "DROP TABLE IF EXISTS artists;"
+    
+    drop_songs_table = 'DROP TABLE IF EXISTS songs;'
+
+    drop_songplays_table = 'DROP TABLE IF EXISTS songplays;'
+
+    drop_staging_events_table = 'DROP TABLE IF EXISTS staging_events;'
+
+    drop_staging_songs_table = 'DROP TABLE IF EXISTS staging_songs;'
+
+    drop_time_table = 'DROP TABLE IF EXISTS time;'
+
+    drop_users_table = 'DROP TABLE IF EXISTS users;'
 
     insert_artists_table = ("""
         INSERT INTO artists(
