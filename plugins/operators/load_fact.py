@@ -14,20 +14,28 @@ class LoadFactOperator(BaseOperator):
                  redshift_conn_id,
                  table,
                  sql_query,
+                 method,
                  *args, **kwargs):
 
         super(LoadFactOperator, self).__init__(*args, **kwargs)
         self.redshift_conn_id = redshift_conn_id
         self.table = table
         self.sql_query = sql_query
+        self.method = method
 
     def execute(self, context):
         """
         Run SQL for loading fact table
         """
-        self.log.info('Beginning task: load fact table')
+        self.log.info(f'Beginning task: load fact table ({self.table})')
         redshift = PostgresHook(self.redshift_conn_id)
-        self.log.info('Clearing data from destination Redshift table')
-        redshift.run(f'DELETE FROM {self.table}')
-        self.log.info('Inserting data from staing table to analysis table')
+        # upsert, replace, append?
+        if self.method == 'replace':
+            self.log.info(f'Clearing data from {self.table}')
+            redshift.run(f'DELETE FROM {self.table}')
+        self.log.info(f'Inserting data from staing table to {self.table}')
         redshift.run(self.sql_query)
+        if self.method == 'upsert':
+            clear_sql = SqlQueries.clean_up_duplicate_songplays
+            self.log.info(f'Deleting duplicates from {self.table}')
+            redshift.run(clear_sql)

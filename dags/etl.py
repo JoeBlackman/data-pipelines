@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
+from modulefinder import ReplacePackage
 import os
+from pickle import APPEND
 from airflow import DAG
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators import (
@@ -8,12 +10,18 @@ from airflow.operators import (
     LoadDimensionOperator, 
     DataQualityOperator
 )
-from plugins.helpers import sql_queries
+from airflow.providers.amazon.aws.transfers import s3_to_redshift
+from enum import Enum
 from plugins.helpers.sql_queries import SqlQueries
 from plugins.helpers.test import Test
 
 # AWS_KEY = os.environ.get('AWS_KEY')
 # AWS_SECRET = os.environ.get('AWS_SECRET')
+
+class InsertionMethod(Enum):
+    APPEND = 'append'
+    REPLACE = 'replace'
+    UPSERT = 'upsert'
 
 default_args = {
     'owner': 'udacity',
@@ -58,7 +66,9 @@ stage_events_to_redshift = StageToRedshiftOperator(
     redshift_conn_id='redshift',
     aws_credentials_id='aws_credentials',
     s3_bucket='udacity-dend',
-    s3_key='log_data'
+    s3_key='log_data',
+    json='s3://udacity-dend/log_json_path.json',
+    method=InsertionMethod.REPLACE
 )
 
 stage_songs_to_redshift = StageToRedshiftOperator(
@@ -68,8 +78,40 @@ stage_songs_to_redshift = StageToRedshiftOperator(
     redshift_conn_id='redshift',
     aws_credentials_id='aws_credentials',
     s3_bucket='udacity-dend',
-    s3_key='song_data'
+    s3_key='song_data',
+    json='auto',
+    method=InsertionMethod.REPLACE
 )
+
+# built in s3_to_redshift operator would have been nice to use for this if
+# spec didn't ask for logging at every stage
+# stage_events_to_redshift = s3_to_redshift(
+#     task_id = 'stage_from_s3',
+#     dag = dag,
+#     redshift_conn_id='redshift',
+#     table='staging_events',
+#     s3_bucket='udacity-dend',
+#     s3_key='event_data',
+#     method='UPSERT',
+#     copy_options=[
+#         f"CREDENTIALS 'aws_iam_role={os.environ.get('DATA_PIPELINE_IAM_ROLE')}'", 
+#         "JSON 's3://udacity-dend/log_json_path.json'",
+#         "REGION 'us-west-2'"
+#     ]
+# )
+# stage_songs_to_redshift = s3_to_redshift(
+#     task_id = 'stage_from_s3',
+#     dag = dag,
+#     redshift_conn_id='redshift',
+#     table='staging_songs',
+#     s3_bucket='udacity-dend',
+#     s3_key='song_data',
+#     method='UPSERT',
+#     copy_options=[
+#         f"IAM_ROLE '{os.environ.get('DATA_PIPELINE_IAM_ROLE')}'",
+#         "JSON 'auto'",
+#         "REGION 'us-west-2'"]
+# )
 
 load_songplays_table = LoadFactOperator(
     task_id='Load_songplays_fact_table',
@@ -85,7 +127,7 @@ load_user_dimension_table = LoadDimensionOperator(
     redshift_conn_id='redshift',
     table='users',
     sql_query = SqlQueries.insert_users_table,
-    truncate_insert = True
+    method = InsertionMethod.REPLACE
 )
 
 load_song_dimension_table = LoadDimensionOperator(
@@ -94,7 +136,7 @@ load_song_dimension_table = LoadDimensionOperator(
     redshift_conn_id='redshift',
     table='songs',
     sql_query = SqlQueries.insert_songs_table,
-    truncate_insert = True
+    method = InsertionMethod.REPLACE
 )
 
 load_artist_dimension_table = LoadDimensionOperator(
@@ -103,7 +145,7 @@ load_artist_dimension_table = LoadDimensionOperator(
     redshift_conn_id='redshift',
     table='artists',
     sql_query = SqlQueries.insert_artists_table,
-    truncate_insert = True
+    method = InsertionMethod.REPLACE
 )
 
 load_time_dimension_table = LoadDimensionOperator(
@@ -112,7 +154,7 @@ load_time_dimension_table = LoadDimensionOperator(
     redshift_conn_id='redshift',
     table='time',
     sql_query = SqlQueries.insert_time_table,
-    truncate_insert = True
+    method = InsertionMethod.REPLACE
 )
 
 run_quality_checks = DataQualityOperator(
@@ -202,3 +244,11 @@ load_user_dimension_table >> run_quality_checks
 load_artist_dimension_table >> run_quality_checks
 load_time_dimension_table >> run_quality_checks
 run_quality_checks >> end_operator
+
+# If we used task groups, assigning dependencies would be a bit simpler
+# again, not trying to stray from the spec
+#start_operator >> stage_from_s3
+#stage_from_s3 >> load_fact_tables
+#load_fact_tables >> load_dim_tables
+#load_dim_tables >> run_quality_checks
+

@@ -1,9 +1,207 @@
 class SqlQueries:
-    copy_from_s3 = """
+    clean_up_duplicate_artists = """
+    BEGIN
+    -- Identify duplicates
+    CREATE TEMP TABLE dup_artists AS
+    SELECT artist_id
+    FROM artists
+    GROUP BY artist_id
+    HAVING COUNT(*) > 1;
+
+    -- Extract one copy of each duplicate
+    CREATE TEMP TABLE new_artists(LIKE artists);
+    INSERT INTO new_artists
+    SELECT DISTINCT *
+    FROM artists
+    WHERE artist_id IN (SELECT artist_id FROM dup_artists);
+
+    -- Remove all rows that were duplicated (all copies)
+    DELETE FROM artists
+    WHERE artist_id IN (SELECT artist_id FROM dup_artists);
+
+    -- Insert the rest of the records that had no duplicates
+    INSERT INTO artists
+    SELECT *
+    FROM new_artists;
+
+    -- clean up
+    DROP TABLE dup_artists;
+    DROP TABLE new_artists;
+    COMMIT;
+    """
+    
+    clean_up_duplicate_songs = """
+    BEGIN
+    -- Identify duplicates
+    CREATE TEMP TABLE dup_songs AS
+    SELECT song_id
+    FROM songs
+    GROUP BY song_id
+    HAVING COUNT(*) > 1;
+
+    -- Extract one copy of each duplicate
+    CREATE TEMP TABLE new_songs(LIKE songs);
+    INSERT INTO new_songs
+    SELECT DISTINCT *
+    FROM songs
+    WHERE song_id IN (SELECT song_id FROM dup_songs);
+
+    -- Remove all rows that were duplicated (all copies)
+    DELETE FROM songs
+    WHERE song_id IN (SELECT song_id FROM dup_songs);
+
+    -- Insert the rest of the records that had no duplicates
+    INSERT INTO songs
+    SELECT *
+    FROM new_songs;
+
+    -- clean up
+    DROP TABLE dup_songs;
+    DROP TABLE new_songs;
+    COMMIT;
+    """
+
+    # a unique event can potentially be identified by userId, sessionId, and ts
+    # (an event occuring at a specific time pertaining to a user action during a session)
+    clean_up_duplicate_staging_events = """
+    BEGIN
+    -- Identify duplicates
+    CREATE TEMPORARY TABLE dup_staging_events AS
+    SELECT se."userId", se."sessionId", se.ts 
+    FROM staging_events se
+    GROUP BY se."userId", se."sessionId", se.ts 
+    HAVING COUNT(*) > 1;
+
+    -- Extract one copy of each duplicate
+    CREATE TEMPORARY TABLE new_staging_events(LIKE staging_events);
+    INSERT INTO new_staging_events
+    SELECT DISTINCT *
+    FROM staging_events se
+    WHERE (se."userId", se."sessionId", se.ts ) IN (SELECT dse."userId", dse."sessionId", dse.ts FROM dup_staging_events dse);
+
+    -- Remove all rows that were duplicated (all copies)
+    DELETE FROM staging_events se
+    WHERE (se."userId", se."sessionId", se.ts ) IN (SELECT dse."userId", dse."sessionId", dse.ts FROM dup_staging_events dse);
+
+    -- Insert the rest of the records that had no duplicates
+    INSERT INTO staging_events
+    SELECT *
+    FROM new_staging_events;
+
+    -- clean up
+    DROP TABLE dup_staging_events;
+    DROP TABLE new_staging_events;
+    COMMIT;
+    """
+
+    clean_up_duplicate_staging_songs = """
+    BEGIN
+    -- Identify duplicates
+    CREATE TEMPORARY TABLE dup_staging_songs AS
+    SELECT ss.song_id
+    FROM staging_songs ss
+    GROUP BY ss.song_id
+    HAVING COUNT(*) > 1;
+
+    -- Extract one copy of each duplicate
+    CREATE TEMPORARY TABLE new_staging_songs(LIKE staging_songs);
+    INSERT INTO new_staging_songs
+    SELECT DISTINCT *
+    FROM staging_songs ss
+    WHERE ss.song_id IN (SELECT dss.song_id FROM dup_staging_songs dss);
+
+    -- Remove all rows that were duplicated (all copies)
+    DELETE FROM staging_songs ss
+    WHERE ss.song_id IN (SELECT dss.song_id FROM dup_staging_songs dss);
+
+    -- Insert the rest of the records that had no duplicates
+    INSERT INTO staging_songs
+    SELECT *
+    FROM new_staging_songs;
+
+    -- clean up
+    DROP TABLE dup_staging_songs;
+    DROP TABLE new_staging_songs;
+    COMMIT;
+    """
+
+    clean_up_duplicate_time = """
+    BEGIN
+    -- Identify duplicates
+    CREATE TEMP TABLE dup_time AS
+    SELECT start_time
+    FROM time
+    GROUP BY start_time
+    HAVING COUNT(*) > 1;
+
+    -- Extract one copy of each duplicate
+    CREATE TEMP TABLE new_time(LIKE time);
+    INSERT INTO new_time
+    SELECT DISTINCT *
+    FROM time
+    WHERE start_time IN (SELECT start_time FROM dup_time);
+
+    -- Remove all rows that were duplicated (all copies)
+    DELETE FROM time
+    WHERE start_time IN (SELECT start_time FROM dup_time);
+
+    -- Insert the rest of the records that had no duplicates
+    INSERT INTO time
+    SELECT *
+    FROM new_time;
+
+    -- clean up
+    DROP TABLE dup_time;
+    DROP TABLE new_time;
+    COMMIT;
+    """
+
+    clean_up_duplicate_users = """
+    BEGIN
+    -- Identify duplicates
+    CREATE TEMP TABLE dup_users AS
+    SELECT user_id
+    FROM users
+    GROUP BY user_id
+    HAVING COUNT(*) > 1;
+
+    -- Extract one copy of each duplicate
+    CREATE TEMP TABLE new_users(LIKE users);
+    INSERT INTO new_users
+    SELECT DISTINCT *
+    FROM users
+    WHERE user_id IN (SELECT user_id FROM dup_users);
+
+    -- Remove all rows that were duplicated (all copies)
+    DELETE FROM users
+    WHERE user_id IN (SELECT user_id FROM dup_users);
+
+    -- Insert the rest of the records that had no duplicates
+    INSERT INTO users
+    SELECT *
+    FROM new_users;
+
+    -- clean up
+    DROP TABLE dup_users;
+    DROP TABLE new_users;
+    COMMIT;
+    """
+    
+    copy_json_from_s3 = """
         COPY ${table}
         FROM s3://${s3_bucket}/${s3_key}
         ACCESS_KEY_ID ${access_key}
         SECRET_ACCESS_KEY ${secret_key}
+        JSON ${json}
+        REGION ${region}
+    """
+
+    copy_delimited_file_from_s3 = """
+        COPY ${table}
+        FROM s3://${s3_bucket}/${s3_key}
+        ACCESS_KEY_ID ${access_key}
+        SECRET_ACCESS_KEY ${secret_key}
+        REGION ${region}
     """
     
     create_artists_table = ("""

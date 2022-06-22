@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.dummy_operator import DummyOperator
-from airflow.providers.postgres.operators.postgres import PostgresOperator
+#from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.utils.task_group import TaskGroup
+from airflow.operators.postgres_operator import PostgresOperator
 from plugins.helpers import sql_queries
 from plugins.helpers.sql_queries import SqlQueries
 from plugins.helpers.test import Test

@@ -10,9 +10,7 @@ class DataQualityOperator(BaseOperator):
 
     @apply_defaults
     def __init__(self,
-                 # Define your operators params (with defaults) here
-                 # Example:
-                 redshift_conn_id = '',
+                 redshift_conn_id = 'redshift',
                  tests = [],
                  *args, **kwargs):
 

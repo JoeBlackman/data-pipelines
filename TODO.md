@@ -18,6 +18,8 @@
     - Data Quality Check
 - For monitoring, we can use an SLA
 - Partitioning = logical or size (as opposed to scheduling)
+    - song data changes slowly
+    - log data changes daily
 - what is the size of the dataset?
 - what is the memory of the airflow worker?
 - if airflow worker can't load the dataset when copying data from s3 to redshift,
