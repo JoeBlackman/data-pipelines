@@ -4,16 +4,20 @@ import os
 from pickle import APPEND
 from airflow import DAG
 from airflow.operators.dummy_operator import DummyOperator
-from airflow.operators import (
-    StageToRedshiftOperator, 
-    LoadFactOperator,
-    LoadDimensionOperator, 
-    DataQualityOperator
-)
-from airflow.providers.amazon.aws.transfers import s3_to_redshift
+#from airflow.operators import (
+#    StageToRedshiftOperator, 
+#    LoadFactOperator,
+#    LoadDimensionOperator, 
+#    DataQualityOperator
+#)
+from operators.stage_redshift import StageToRedshiftOperator
+from operators.load_fact import LoadFactOperator
+from operators.load_dimension import LoadDimensionOperator
+from operators.data_quality import DataQualityOperator
+#from airflow.providers.amazon.aws.transfers import s3_to_redshift
 from enum import Enum
-from plugins.helpers.sql_queries import SqlQueries
-from plugins.helpers.test import Test
+from helpers.sql_queries import SqlQueries
+from helpers.test import Test
 
 # AWS_KEY = os.environ.get('AWS_KEY')
 # AWS_SECRET = os.environ.get('AWS_SECRET')
@@ -118,7 +122,8 @@ load_songplays_table = LoadFactOperator(
     dag=dag,
     redshift_conn_id='redshift',
     table='songplays',
-    sql_query=SqlQueries.insert_songplays_table
+    sql_query=SqlQueries.insert_songplays_table,
+    method = InsertionMethod.UPSERT
 )
 
 load_user_dimension_table = LoadDimensionOperator(
