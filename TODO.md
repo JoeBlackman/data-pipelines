@@ -1,0 +1,26 @@
+# **Notes**
+- Data Source
+    - Amazon S3 (us-west-2)
+- Data Destination
+    - Amazon Redshift
+- Airflow instance
+    - Udacity workspace
+    - EC2/GCP cloud composer
+- Template provides sql and ETL code. Just need to implement operators and DAGs
+    - staging tasks use an S3 to Redshift operator
+    - loading tasks use a Postgres operator to run sql for building fact and dim tables
+    - data quality check tasks uses a Python operator with a redshift hook
+        - check record count in destination table
+- For easy reusability, subDAGs are an option. could be a problem if maintenance and debugging is impacted
+- what kinds of tasks would benefit from subDAGs
+    - S3 to Redshift
+    - Load Redshift
+    - Data Quality Check
+- For monitoring, we can use an SLA
+- Partitioning = logical or size (as opposed to scheduling)
+    - song data changes slowly
+    - log data changes daily
+- what is the size of the dataset?
+- what is the memory of the airflow worker?
+- if airflow worker can't load the dataset when copying data from s3 to redshift,
+then we must partition by size OR we must process data externally with spark
