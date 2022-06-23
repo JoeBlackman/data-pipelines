@@ -1,4 +1,7 @@
 class SqlQueries:
+
+    # 06/23/2022
+    # source: https://stackoverflow.com/questions/37582261/deleting-duplicates-rows-from-redshift
     clean_up_duplicate_artists = """
     BEGIN
     -- Identify duplicates
@@ -29,7 +32,9 @@ class SqlQueries:
     DROP TABLE new_artists;
     COMMIT;
     """
-    
+
+    # 06/23/2022
+    # source: https://stackoverflow.com/questions/37582261/deleting-duplicates-rows-from-redshift
     clean_up_duplicate_songs = """
     BEGIN
     -- Identify duplicates
@@ -61,6 +66,8 @@ class SqlQueries:
     COMMIT;
     """
 
+    # 06/23/2022
+    # source: https://stackoverflow.com/questions/37582261/deleting-duplicates-rows-from-redshift
     # a unique event can potentially be identified by userId, sessionId, and ts
     # (an event occuring at a specific time pertaining to a user action during a session)
     clean_up_duplicate_staging_events = """
@@ -94,6 +101,8 @@ class SqlQueries:
     COMMIT;
     """
 
+    # 06/23/2022
+    # source: https://stackoverflow.com/questions/37582261/deleting-duplicates-rows-from-redshift
     clean_up_duplicate_staging_songs = """
     BEGIN
     -- Identify duplicates
@@ -125,6 +134,8 @@ class SqlQueries:
     COMMIT;
     """
 
+    # 06/23/2022
+    # source: https://stackoverflow.com/questions/37582261/deleting-duplicates-rows-from-redshift
     clean_up_duplicate_time = """
     BEGIN
     -- Identify duplicates
@@ -155,7 +166,8 @@ class SqlQueries:
     DROP TABLE new_time;
     COMMIT;
     """
-
+    # 06/23/2022
+    # source: https://stackoverflow.com/questions/37582261/deleting-duplicates-rows-from-redshift
     clean_up_duplicate_users = """
     BEGIN
     -- Identify duplicates
