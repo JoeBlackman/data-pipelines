@@ -20,7 +20,7 @@ class StageToRedshiftOperator(BaseOperator):
                  s3_bucket,
                  s3_key,
                  json,
-                 truncate_insert,
+                 #truncate_insert,
                  *args, **kwargs):
 
         super(StageToRedshiftOperator, self).__init__(*args, **kwargs)
@@ -30,7 +30,7 @@ class StageToRedshiftOperator(BaseOperator):
         self.s3_key = s3_key
         self.aws_credentials_id = aws_credentials_id
         self.json = json
-        self.truncate_insert = truncate_insert
+        #self.truncate_insert = truncate_insert
 
     def execute(self, context):
         # parameters should specify where in s3 the file is loaded and what is the target table
@@ -41,9 +41,11 @@ class StageToRedshiftOperator(BaseOperator):
         credentials = aws_hook.get_credentials()
         redshift = PostgresHook(self.redshift_conn_id)
         # upsert, replace, append?
-        if self.truncate_insert == True:
-            self.log.info(f'Clearing data from {self.table}')
-            redshift.run(f'DELETE FROM {self.table};')
+        self.log.info(f'Clearing data from {self.table}')
+        redshift.run(f'DELETE FROM {self.table};')
+        #if self.truncate_insert == True:
+        #    self.log.info(f'Clearing data from {self.table}')
+        #    redshift.run(f'DELETE FROM {self.table};')
         self.log.info('Copying data from S3 to Redshift')
         copy_sql = Template(SqlQueries.copy_json_from_s3)
         copy_sql.substitute(
