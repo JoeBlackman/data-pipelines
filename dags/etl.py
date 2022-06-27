@@ -72,7 +72,7 @@ stage_events_to_redshift = StageToRedshiftOperator(
     s3_bucket='udacity-dend',
     s3_key='log_data',
     json='s3://udacity-dend/log_json_path.json',
-    truncate_insert = True
+    # truncate_insert = True
 )
 
 stage_songs_to_redshift = StageToRedshiftOperator(
@@ -84,7 +84,7 @@ stage_songs_to_redshift = StageToRedshiftOperator(
     s3_bucket='udacity-dend',
     s3_key='song_data',
     json='auto',
-    truncate_insert=True
+    # truncate_insert=True
 )
 
 # built in s3_to_redshift operator would have been nice to use for this if
