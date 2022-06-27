@@ -29,11 +29,11 @@ class InsertionMethod(Enum):
 
 default_args = {
     'owner': 'udacity',
-    'Depends_on_past': False,
+    'depends_on_past': False,
     'start_date': datetime(2019, 1, 12),
-    'Retries': 3,
-    'Retry_delay': timedelta(minutes=5),
-    'Catchup': False,
+    'retries': 3,
+    'retry_delay': timedelta(minutes=5),
+    'catchup': False,
     'email_on_retry': False
 }
 
@@ -41,7 +41,7 @@ dag = DAG(
     'sparkify-etl',
     default_args=default_args,
     description='Load and transform data in Redshift with Airflow',
-    schedule_interval=timedelta(hours=1),
+    schedule_interval='@hourly',
     tags=['udacity', 'data-pipelines'],
 )
 
@@ -72,7 +72,7 @@ stage_events_to_redshift = StageToRedshiftOperator(
     s3_bucket='udacity-dend',
     s3_key='log_data',
     json='s3://udacity-dend/log_json_path.json',
-    method=InsertionMethod.REPLACE
+    # truncate_insert = True
 )
 
 stage_songs_to_redshift = StageToRedshiftOperator(
@@ -84,7 +84,7 @@ stage_songs_to_redshift = StageToRedshiftOperator(
     s3_bucket='udacity-dend',
     s3_key='song_data',
     json='auto',
-    method=InsertionMethod.REPLACE
+    # truncate_insert=True
 )
 
 # built in s3_to_redshift operator would have been nice to use for this if
@@ -123,7 +123,7 @@ load_songplays_table = LoadFactOperator(
     redshift_conn_id='redshift',
     table='songplays',
     sql_query=SqlQueries.insert_songplays_table,
-    method = InsertionMethod.UPSERT
+    truncate_insert = False
 )
 
 load_user_dimension_table = LoadDimensionOperator(
@@ -132,7 +132,7 @@ load_user_dimension_table = LoadDimensionOperator(
     redshift_conn_id='redshift',
     table='users',
     sql_query = SqlQueries.insert_users_table,
-    method = InsertionMethod.REPLACE
+    truncate_insert = True
 )
 
 load_song_dimension_table = LoadDimensionOperator(
@@ -141,7 +141,7 @@ load_song_dimension_table = LoadDimensionOperator(
     redshift_conn_id='redshift',
     table='songs',
     sql_query = SqlQueries.insert_songs_table,
-    method = InsertionMethod.REPLACE
+    truncate_insert = True
 )
 
 load_artist_dimension_table = LoadDimensionOperator(
@@ -150,7 +150,7 @@ load_artist_dimension_table = LoadDimensionOperator(
     redshift_conn_id='redshift',
     table='artists',
     sql_query = SqlQueries.insert_artists_table,
-    method = InsertionMethod.REPLACE
+    truncate_insert = True
 )
 
 load_time_dimension_table = LoadDimensionOperator(
@@ -159,7 +159,7 @@ load_time_dimension_table = LoadDimensionOperator(
     redshift_conn_id='redshift',
     table='time',
     sql_query = SqlQueries.insert_time_table,
-    method = InsertionMethod.REPLACE
+    truncate_insert = True
 )
 
 run_quality_checks = DataQualityOperator(

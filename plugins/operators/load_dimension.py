@@ -13,7 +13,7 @@ class LoadDimensionOperator(BaseOperator):
                  redshift_conn_id,
                  table,
                  sql_query,
-                 method,
+                 truncate_insert,
                  *args, **kwargs):
         """
         Initialize LoadDimensionOperator
@@ -22,7 +22,7 @@ class LoadDimensionOperator(BaseOperator):
         self.redshift_conn_id = redshift_conn_id
         self.table = table
         self.sql_query = sql_query
-        self.truncate_insert = method
+        self.truncate_insert = truncate_insert
 
     def execute(self, context):
         """
@@ -30,22 +30,23 @@ class LoadDimensionOperator(BaseOperator):
         """
         self.log.info(f'Beginning task: load dim table ({self.table})')
         redshift = PostgresHook(self.redshift_conn_id)
-        if self.method == 'replace':
+        if self.truncate_insert == True:
             self.log.info(f'Clearing data from {self.table}')
             redshift.run(f'DELETE FROM {self.table};')
         self.log.info(f'Inserting data from staing table to {self.table}')
         redshift.run(self.sql_query)
-        if self.method == 'upsert':
-            clear_sql = None
-            if self.table == 'artists':
-                clear_sql = SqlQueries.clean_up_duplicate_artists
-            elif self.table == 'songs':
-                clear_sql = SqlQueries.clean_up_duplicate_songs
-            elif self.table == 'time':
-                clear_sql = SqlQueries.clean_up_duplicate_time
-            elif self.table == 'users':
-                clear_sql = SqlQueries.clean_up_duplicate_users
-            else:
-                return
-            self.log.info(f'Deleting duplicates from {self.table}')
-            redshift.run(clear_sql)
+        # below code would be for upserts if we chose to support them
+        # if self.method == 'upsert':
+        #     clear_sql = None
+        #     if self.table == 'artists':
+        #         clear_sql = SqlQueries.clean_up_duplicate_artists
+        #     elif self.table == 'songs':
+        #         clear_sql = SqlQueries.clean_up_duplicate_songs
+        #     elif self.table == 'time':
+        #         clear_sql = SqlQueries.clean_up_duplicate_time
+        #     elif self.table == 'users':
+        #         clear_sql = SqlQueries.clean_up_duplicate_users
+        #     else:
+        #         return
+        #     self.log.info(f'Deleting duplicates from {self.table}')
+        #     redshift.run(clear_sql)

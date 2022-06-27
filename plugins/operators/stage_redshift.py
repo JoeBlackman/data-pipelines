@@ -20,7 +20,7 @@ class StageToRedshiftOperator(BaseOperator):
                  s3_bucket,
                  s3_key,
                  json,
-                 method,
+                 #truncate_insert,
                  *args, **kwargs):
 
         super(StageToRedshiftOperator, self).__init__(*args, **kwargs)
@@ -30,7 +30,7 @@ class StageToRedshiftOperator(BaseOperator):
         self.s3_key = s3_key
         self.aws_credentials_id = aws_credentials_id
         self.json = json
-        self.method = method
+        #self.truncate_insert = truncate_insert
 
     def execute(self, context):
         # parameters should specify where in s3 the file is loaded and what is the target table
@@ -41,9 +41,11 @@ class StageToRedshiftOperator(BaseOperator):
         credentials = aws_hook.get_credentials()
         redshift = PostgresHook(self.redshift_conn_id)
         # upsert, replace, append?
-        if self.method == 'replace':
-            self.log.info(f'Clearing data from {self.table}')
-            redshift.run(f'DELETE FROM {self.table};')
+        self.log.info(f'Clearing data from {self.table}')
+        redshift.run(f'DELETE FROM {self.table};')
+        #if self.truncate_insert == True:
+        #    self.log.info(f'Clearing data from {self.table}')
+        #    redshift.run(f'DELETE FROM {self.table};')
         self.log.info('Copying data from S3 to Redshift')
         copy_sql = Template(SqlQueries.copy_json_from_s3)
         copy_sql.substitute(
@@ -55,16 +57,17 @@ class StageToRedshiftOperator(BaseOperator):
             json=self.json
         )
         redshift.run(copy_sql)
-        if self.method == 'upsert':
-            clear_sql = None
-            if self.table == 'staging_events':
-                clear_sql = SqlQueries.clean_up_duplicate_staging_events
-            elif self.table == 'staging_songs':
-                clear_sql = SqlQueries.clean_up_duplicate_staging_songs
-            else:
-                return
-            self.log.info(f'Deleting duplicates from {self.table}')
-            redshift.run(clear_sql)
+        # below code would be for upserts if we chose to support them
+        # if self.method == 'upsert':
+        #     clear_sql = None
+        #     if self.table == 'staging_events':
+        #         clear_sql = SqlQueries.clean_up_duplicate_staging_events
+        #     elif self.table == 'staging_songs':
+        #         clear_sql = SqlQueries.clean_up_duplicate_staging_songs
+        #     else:
+        #         return
+        #     self.log.info(f'Deleting duplicates from {self.table}')
+        #     redshift.run(clear_sql)
 
 
 

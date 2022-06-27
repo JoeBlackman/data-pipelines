@@ -10,9 +10,9 @@ from helpers.test import Test
 
 default_args = {
     'owner': 'udacity',
-    'Depends_on_past': False,
-    'Retries': 0,
-    'Catchup': False,
+    'depends_on_past': False,
+    'retries': 0,
+    'catchup': False,
     'email_on_retry': False
 }
 
