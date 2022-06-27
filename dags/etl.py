@@ -29,11 +29,11 @@ class InsertionMethod(Enum):
 
 default_args = {
     'owner': 'udacity',
-    'Depends_on_past': False,
+    'depends_on_past': False,
     'start_date': datetime(2019, 1, 12),
-    'Retries': 3,
-    'Retry_delay': timedelta(minutes=5),
-    'Catchup': False,
+    'retries': 3,
+    'retry_delay': timedelta(minutes=5),
+    'catchup': False,
     'email_on_retry': False
 }
 
