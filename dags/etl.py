@@ -41,7 +41,7 @@ dag = DAG(
     'sparkify-etl',
     default_args=default_args,
     description='Load and transform data in Redshift with Airflow',
-    schedule_interval=timedelta(hours=1),
+    schedule_interval='@hourly',
     tags=['udacity', 'data-pipelines'],
 )
 
